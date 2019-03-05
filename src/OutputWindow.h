@@ -15,7 +15,7 @@
 #include <QStringList>
 
 #include "ui_output-window.h"
-#include "Process.h"
+#include "QDSProcess.h"
 
 class QCloseEvent;
 using QDirStat::Process;

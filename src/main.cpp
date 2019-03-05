@@ -10,14 +10,14 @@
 #include <iostream>	// cerr
 
 #include <QApplication>
-#include "MainWindow.h"
-#include "DirTreeModel.h"
+#include "IMainWindow.h"
+//#include "DirTreeModel.h"
 #include "Settings.h"
 #include "Logger.h"
 #include "Exception.h"
 #include "Version.h"
 
-
+IMainWindow*  CreateMainWindow();
 using std::cerr;
 static const char * progName = "qdirstat";
 static bool fatal = false;
@@ -90,12 +90,12 @@ int main( int argc, char *argv[] )
     QStringList argList = QCoreApplication::arguments();
     argList.removeFirst(); // Remove program name
 
-    MainWindow * mainWin = new MainWindow();
+    IMainWindow * mainWin = CreateMainWindow();
     CHECK_PTR( mainWin );
     mainWin->show();
 
     if ( commandLineSwitch( "--slow-update", "-s", argList ) )
-	mainWin->dirTreeModel()->setSlowUpdate();
+    mainWin->setSlowUpdate();
 
     if ( argList.isEmpty() )
 	mainWin->askOpenUrl();

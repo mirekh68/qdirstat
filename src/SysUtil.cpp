@@ -11,7 +11,7 @@
 #include <pwd.h>        // getpwuid()
 
 #include "SysUtil.h"
-#include "Process.h"
+#include "QDSProcess.h"
 #include "Logger.h"
 #include "Exception.h"
 

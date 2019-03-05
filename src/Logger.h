@@ -296,7 +296,7 @@ QString formatErrno();
 
 #ifndef DONT_DEPRECATE_STRERROR
     // Use formatErrno() instead which deals with UTF-8 issues
-    char * strerror(int) __attribute__ ((deprecated));
+char * strerror(int) __attribute__((deprecated));
 #endif
 
 

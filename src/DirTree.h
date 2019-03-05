@@ -11,20 +11,20 @@
 #define DirTree_h
 
 
-#include <sys/types.h>
+//#include <sys/types.h>
 #include <limits.h>
-#include <dirent.h>
+//#include <dirent.h>
 #include <stdlib.h>
 
 #include "Logger.h"
 #include "DirInfo.h"
-#include "DirReadJob.h"
+//#include "DirReadJob.h"
 
 
 namespace QDirStat
 {
-    class DirReadJob;
-    class FileInfoSet;
+    //class DirReadJob;
+    //class IFileInfoSet;
 
 
     /**
@@ -88,7 +88,7 @@ namespace QDirStat
 	 * When 0 is passed, the entire tree will be refreshed, i.e. from the
 	 * first toplevel element on.
 	 **/
-	void refresh( DirInfo * subtree = 0 );
+	void refresh( IDirInfo * subtree = 0 );
 
 	/**
 	 * Refresh a number of subtrees.
@@ -98,7 +98,7 @@ namespace QDirStat
 	/**
 	 * Delete a subtree.
 	 **/
-	void deleteSubtree( FileInfo * subtree );
+	void deleteSubtree( IFileInfo * subtree );
 
 
     public:
@@ -113,24 +113,24 @@ namespace QDirStat
 	 * Return the root item of this tree. Notice that this is a pseudo
 	 * root that doesn not really correspond to a filesystem object.
 	 **/
-	DirInfo * root() const { return _root; }
+	IDirInfo * root() const { return _root; }
 
 	/**
 	 * Sets the root item of this tree.
 	 **/
-	void setRoot( DirInfo * newRoot );
+	void setRoot( IDirInfo * newRoot );
 
 	/**
 	 * Return the first toplevel item of this tree or 0 if there is
 	 * none. This is the logical root item.
 	 **/
-	FileInfo * firstToplevel() const;
+	IFileInfo * firstToplevel() const;
 
 	/**
 	 * Return 'true' if 'item' is a toplevel item, i.e. a direct child of
 	 * the root item.
 	 **/
-	bool isTopLevel( FileInfo *item ) const;
+	bool isTopLevel( IFileInfo *item ) const;
 
         /**
          * Return the device of this tree's root item ("/dev/sda3" etc.).
@@ -155,13 +155,13 @@ namespace QDirStat
 	 * This is just a convenience method that maps to
 	 *    DirTree::root()->locate( url, findDotEntries )
 	 **/
-	FileInfo * locate( QString url, bool findDotEntries = false )
+	IFileInfo * locate( QString url, bool findDotEntries = false )
 	    { return _root ? _root->locate( url, findDotEntries ) : 0; }
 
 	/**
 	 * Add a new directory read job to the queue.
 	 **/
-	void addJob( DirReadJob * job );
+	//void addJob( DirReadJob * job );
 
 	/**
 	 * Should directory scans cross file systems?
@@ -184,7 +184,7 @@ namespace QDirStat
 	 * Directory read jobs are required to call this for each child added
 	 * so the tree can emit the corresponding @ref childAdded() signal.
 	 **/
-	virtual void childAddedNotify( FileInfo *newChild );
+	virtual void childAddedNotify( IFileInfo *newChild );
 
 	/**
 	 * Notification that a child is about to be deleted.
@@ -192,7 +192,7 @@ namespace QDirStat
 	 * Directory read jobs are required to call this for each deleted child
 	 * so the tree can emit the corresponding @ref deletingChild() signal.
 	 **/
-	virtual void deletingChildNotify( FileInfo *deletedChild );
+	virtual void deletingChildNotify( IFileInfo *deletedChild );
 
 	/**
 	 * Notification that one or more children have been deleted.
@@ -220,21 +220,21 @@ namespace QDirStat
 	void sendAborted();
 
 	/**
-	 * Send a @ref startingReading( DirInfo * ) signal.
+	 * Send a @ref startingReading( IDirInfo * ) signal.
 	 **/
-	void sendStartingReading( DirInfo * dir );
+	void sendStartingReading( IDirInfo * dir );
 
 	/**
-	 * Send a @ref readJobFinished( DirInfo * ) signal.
+	 * Send a @ref readJobFinished( IDirInfo * ) signal.
 	 **/
-	void sendReadJobFinished( DirInfo * dir );
+	void sendReadJobFinished( IDirInfo * dir );
 
 	/**
 	 * Send a @ref finalizeLocal() signal to give views a chance to
 	 * finalize the display of this directory level - e.g. clean up dot
 	 * entries, set the final "expandable" state etc.
 	 **/
-	void sendFinalizeLocal( DirInfo *dir );
+	void sendFinalizeLocal( IDirInfo *dir );
 
 	/**
 	 * Returns 'true' if directory reading is in progress in this tree.
@@ -259,7 +259,7 @@ namespace QDirStat
 	/**
 	 * Emitted when a child has been added.
 	 **/
-	void childAdded( FileInfo * newChild );
+	void childAdded( IFileInfo * newChild );
 
 	/**
 	 * Emitted when the tree is about to be cleared.
@@ -269,7 +269,7 @@ namespace QDirStat
 	/**
 	 * Emitted when a child is about to be deleted.
 	 **/
-	void deletingChild( FileInfo * deletedChild );
+	void deletingChild( IFileInfo * deletedChild );
 
 	/**
 	 * Emitted after a child is deleted. If you are interested which child
@@ -284,12 +284,12 @@ namespace QDirStat
 	 * Emitted when a subtree is about to be cleared, i.e. all its children
 	 * will be deleted (but not the subtree node itself).
 	 **/
-	void clearingSubtree( DirInfo * subtree );
+	void clearingSubtree( IDirInfo * subtree );
 
 	/**
 	 * Emitted when clearing a subtree is finished.
 	 **/
-	void subtreeCleared( DirInfo * subtree );
+	void subtreeCleared( IDirInfo * subtree );
 
 	/**
 	 * Emitted when reading is started.
@@ -309,13 +309,13 @@ namespace QDirStat
 	/**
 	 * Emitted when reading the specified directory is started.
 	 **/
-	void startingReading( DirInfo * dir );
+	void startingReading( IDirInfo * dir );
 
 	/**
 	 * Emitted when reading the specified directory has been finished.
-	 * This is sent AFTER finalizeLocal( DirInfo * dir ).
+	 * This is sent AFTER finalizeLocal( IDirInfo * dir ).
 	 **/
-	void readJobFinished( DirInfo * dir );
+	void readJobFinished( IDirInfo * dir );
 
 	/**
 	 * Emitted when reading a directory is finished.
@@ -325,13 +325,13 @@ namespace QDirStat
 	 * WARNING: 'dir' may be 0 if the the tree's root could not be read.
 	 *
 	 * Use this signal to do similar cleanups like
-	 * @ref DirInfo::finalizeLocal(), e.g. cleaning up unused / undesired
-	 * dot entries like in @ref DirInfo::cleanupDotEntries().
+	 * @ref IDirInfo::finalizeLocal(), e.g. cleaning up unused / undesired
+	 * dot entries like in @ref IDirInfo::cleanupDotEntries().
 	 *
 	 * Notice that the dot entry might be removed and its children
 	 * reparented after this signal.
 	 **/
-	void finalizeLocal( DirInfo * dir );
+	void finalizeLocal( IDirInfo * dir );
 
 	/**
 	 * Single line progress information, emitted when the read status
@@ -352,8 +352,8 @@ namespace QDirStat
 
     protected:
 
-	DirInfo *	_root;
-	DirReadJobQueue _jobQueue;
+	IDirInfo *	_root;
+	//DirReadJobQueue _jobQueue;
 	bool		_crossFileSystems;
 	bool		_isBusy;
         QString         _device;

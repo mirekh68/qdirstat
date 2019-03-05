@@ -12,7 +12,7 @@
 
 #include <QLabel>
 
-#include "FileInfo.h"
+#include "IFileInfo.h"
 #include "DirTree.h"
 
 
@@ -56,7 +56,7 @@ namespace QDirStat
 	 * Set the path from a FileInfo item.
          * A null item clears the path.
 	 **/
-	void setPath( FileInfo * item );
+	void setPath( IFileInfo * item );
 
     signals:
 

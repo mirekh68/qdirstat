@@ -13,7 +13,7 @@ TEMPLATE         = app
 
 QT              += widgets
 CONFIG          += debug
-DEPENDPATH      += .
+#DEPENDPATH      += .
 MOC_DIR          = .moc
 OBJECTS_DIR      = .obj
 LIBS            += -lz
@@ -136,7 +136,6 @@ HEADERS   =                             \
             OutputWindow.h              \
             PercentBar.h                \
             PkgManager.h                \
-            Process.h                   \
             Qt4Compat.h                 \
             Refresher.h                 \
             SelectionModel.h            \
@@ -151,6 +150,7 @@ HEADERS   =                             \
             TreemapTile.h               \
             TreemapView.h               \
             Version.h                   \
+    QDSProcess.h
 
 
 

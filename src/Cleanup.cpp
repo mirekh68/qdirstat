@@ -17,7 +17,7 @@
 #include "DirTree.h"
 #include "DirSaver.h"
 #include "OutputWindow.h"
-#include "Process.h"
+#include "QDSProcess.h"
 #include "Logger.h"
 #include "Exception.h"
 

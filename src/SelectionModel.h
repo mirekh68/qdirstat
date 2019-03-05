@@ -17,11 +17,11 @@
 
 namespace QDirStat
 {
-    class FileInfo;
+    class IFileInfo;
     class DirTreeModel;
 
     /**
-     * Selection model that can translate between QModelIndex and FileInfo
+     * Selection model that can translate between QModelIndex and IFileInfo
      * pointers for use with a QModelIndex based Qt item view (e.g., a
      * TreeView) and any QDirStat::DirTree based view (e.g., the
      * QDirStat::TreeMapView).
@@ -29,7 +29,7 @@ namespace QDirStat
      * This is only a thin wrapper around QItemSelectionModel. The
      * QItemSelectionModel base class is the master with its QModelIndex based
      * selection; this subclass fetches that QModelIndex selection and
-     * translates each item into a FileInfo pointer on demand.
+     * translates each item into a IFileInfo pointer on demand.
      **/
     class SelectionModel: public QItemSelectionModel
     {
@@ -50,13 +50,13 @@ namespace QDirStat
 	/**
 	 * Return all currently selected items as a set.
 	 **/
-	FileInfoSet selectedItems();
+	IFileInfoSet selectedItems();
 
 	/**
 	 * Return the current item (the one that has the keyboard focus).
 	 * This might return 0 if currently no item has the keyboard focus.
 	 **/
-	FileInfo * currentItem() const { return _currentItem; }
+	IFileInfo * currentItem() const { return _currentItem; }
 
 	/**
 	 * Return the DirTreeModel of this object.
@@ -81,7 +81,7 @@ namespace QDirStat
 	 * If this item is 0, everything is deselected.
 	 * This does NOT change the current item.
 	 **/
-	void selectItem( FileInfo * item );
+	void selectItem( IFileInfo * item );
 
 	/**
 	 * Extend the current selection with one item: Add this item to the set
@@ -93,12 +93,12 @@ namespace QDirStat
 	 * If 'clear' is 'true', this will clear the old selection first, so
 	 * this has the same effect as selectItem().
 	 **/
-	void extendSelection( FileInfo * item, bool clear = false );
+	void extendSelection( IFileInfo * item, bool clear = false );
 
 	/**
 	 * Set the selected items, i.e., replace the complete selection.
 	 **/
-	void setSelectedItems( const FileInfoSet  & selectedItems );
+	void setSelectedItems( const IFileInfoSet  & selectedItems );
 
 	/**
 	 * Make 'item' the current item. This is different from the selection:
@@ -117,13 +117,13 @@ namespace QDirStat
 	 * with this item, i.e. only this item is selected afterwards. If
 	 * 'select' is 'false', the selection remains unchanged.
 	 **/
-	void setCurrentItem( FileInfo * item, bool select = false );
+	void setCurrentItem( IFileInfo * item, bool select = false );
 
         /**
          * Search the dir tree for an item with the specified path and, if
          * successful, make it the current item.
          *
-         * See also setCurrentItem( FileInfo *, bool ).
+         * See also setCurrentItem( IFileInfo *, bool ).
          **/
 	void setCurrentItem( const QString & path );
 
@@ -132,12 +132,12 @@ namespace QDirStat
 	 * tree views to close all other branches. See also the
 	 * currentBranchChanged() signal.
 	 **/
-	void setCurrentBranch( FileInfo * item );
+	void setCurrentBranch( IFileInfo * item );
 
 	/**
 	 * Return the current branch or 0 if there is none.
 	 **/
-	FileInfo * currentBranch() const { return _currentBranch; }
+	IFileInfo * currentBranch() const { return _currentBranch; }
 
 	/**
 	 * Prepare refreshing a set of items: Select a suitable item that will
@@ -154,7 +154,7 @@ namespace QDirStat
 	 * on which the cleanup action is performed, or their respective
 	 * parents.
 	 **/
-	void prepareRefresh( const FileInfoSet & refreshSet );
+	void prepareRefresh( const IFileInfoSet & refreshSet );
 
 	/**
 	 * For debugging: Dump the currently selected items and the current
@@ -168,33 +168,33 @@ namespace QDirStat
 	 * Emitted when the current item changes. 'newCurrent' is the new
 	 * current item, 'oldCurrent' the previous one. Any of them might be 0.
 	 **/
-	void currentItemChanged( FileInfo * newCurrent, FileInfo * oldCurrent );
+	void currentItemChanged( IFileInfo * newCurrent, IFileInfo * oldCurrent );
 
 	/**
 	 * Emitted when the selection changes.
 	 **/
 	void selectionChanged();
-	void selectionChanged( const FileInfoSet & selectedItems );
+	void selectionChanged( const IFileInfoSet & selectedItems );
 
 	/**
 	 * Emitted when the current branch changes. Tree views can use this to
 	 * close all other branches.
 	 **/
 	void currentBranchChanged( const QModelIndex & newCurrentBranch );
-	void currentBranchChanged( FileInfo * newCurrentBranch );
+	void currentBranchChanged( IFileInfo * newCurrentBranch );
 
     protected slots:
 
 	/**
 	 * Propagate the QModelIndex based currentChanged() signal to
-	 * the FileInfo * based one
+	 * the IFileInfo * based one
 	 **/
 	void propagateCurrentChanged( const QModelIndex & newCurrent,
 				      const QModelIndex & oldCurrent );
 
 	/**
 	 * Propagate the QModelIndex based selectionChanged() signal to
-	 * the FileInfo * based one
+	 * the IFileInfo * based one
 	 **/
 	void propagateSelectionChanged( const QItemSelection & selected,
 					const QItemSelection & deselected );
@@ -206,7 +206,7 @@ namespace QDirStat
 	/**
 	 * Notification that a child is about to be deleted.
 	 **/
-	void deletingChildNotify( FileInfo *deletedChild );
+	void deletingChildNotify( IFileInfo *deletedChild );
 
 
     protected:
@@ -214,9 +214,9 @@ namespace QDirStat
 	// Data members
 
 	DirTreeModel	* _dirTreeModel;
-	FileInfo	* _currentItem;
-	FileInfo	* _currentBranch;
-	FileInfoSet	  _selectedItems;
+	IFileInfo	* _currentItem;
+	IFileInfo	* _currentBranch;
+	IFileInfoSet	  _selectedItems;
 	bool		  _selectedItemsDirty;
 	bool		  _verbose;
 
@@ -279,8 +279,8 @@ namespace QDirStat
 	// from SelectionModel
 
 	void selectionChanged();
-	void selectionChanged( const FileInfoSet & selectedItems );
-	void currentItemChanged( FileInfo * newCurrent, FileInfo * oldCurrent );
+	void selectionChanged( const IFileInfoSet & selectedItems );
+	void currentItemChanged( IFileInfo * newCurrent, IFileInfo * oldCurrent );
 
     };	// class SelectionModelProxy
 

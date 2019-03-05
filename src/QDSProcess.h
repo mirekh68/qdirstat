@@ -7,8 +7,8 @@
  *		 Stefan Hundhammer <Stefan.Hundhammer@gmx.de>
  */
 
-#ifndef Process_h
-#define Process_h
+#ifndef QDSProcess_h
+#define QDSProcess_h
 
 #include <QProcess>
 

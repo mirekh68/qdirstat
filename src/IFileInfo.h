@@ -1,0 +1,533 @@
+/*
+ *   File name: IFileInfo.h
+ *   Summary:	Support classes for QDirStat
+ *   License:	GPL V2 - See file LICENSE for details.
+ *
+ *   Author:	M Habarta <>
+ */
+
+
+#ifndef IFileInfo_h
+#define IFileInfo_h
+
+
+//#include <sys/types.h>
+//#include <sys/stat.h>
+#include <limits.h>
+
+#include <QTextStream>
+#include <QList>
+
+#include "Logger.h"
+
+
+
+
+namespace QDirStat
+{
+	typedef long long FileSize;
+
+#define FileSizeMax   LLONG_MAX
+// 0x7FFFFFFFFFFFFFFFLL == 9223372036854775807LL
+
+#define IFileInfoMagic 4242
+
+	// Forward declarations
+	class IDirInfo;
+	class DirTree;
+
+
+	/**
+	 * Status of a directory read job.
+	 **/
+	enum DirReadState
+	{
+	DirQueued,		// Waiting in the directory read queue
+	DirReading,		// Reading in progress
+	DirFinished,		// Reading finished and OK
+	DirOnRequestOnly,	// Will be read upon explicit request only (mount points)
+	DirCached,		// Content was read from a cache
+	DirAborted,		// Reading aborted upon user request
+	DirError		// Error while reading
+	};
+
+#define	FI_INTERFACE
+
+	/**
+	 * The most basic building block of a @ref DirTree:
+	 *
+	 * Information about one single directory entry. This is the type of info
+	 * typically obtained by stat() / lstat() or similar calls.
+	 *
+	 * This class is tuned for size rather than speed: A typical Linux system
+	 * easily has 150,000+ file system objects, and at least one entry of this
+	 * sort is required for each of them.
+	 *
+	 * This class provides stubs for children management, yet those stubs all
+	 * are default implementations that don't really deal with children.
+	 * Derived classes need to take care of that.
+	 *
+	 * @short Basic file information (like obtained by the lstat() sys call)
+	 **/
+	class IFileInfo
+	{
+	public:
+	/**
+	 * Default constructor.
+	 **/
+#ifndef FI_INTERFACE
+		IFileInfo( DirTree    * tree,
+		  DirInfo    * parent = 0,
+		  const char * name   = 0 );
+
+	/**
+	 * Constructor from a stat buffer (i.e. based on an lstat() call).
+	 **/
+	IFileInfo( const QString & filenameWithoutPath,
+		  struct stat	* statInfo,
+		  DirTree	* tree,
+		  DirInfo	* parent = 0 );
+
+	/**
+	 * Constructor from the bare neccessary fields
+	 * for use from a cache file reader
+	 *
+	 * If 'blocks' is -1, it will be calculated from 'size'.
+	 **/
+	IFileInfo( DirTree *	  tree,
+		  DirInfo *	  parent,
+		  const QString & filenameWithoutPath,
+		  mode_t	  mode,
+		  FileSize	  size,
+		  time_t	  mtime,
+		  FileSize	  blocks = -1,
+		  nlink_t	  links	 = 1 );
+
+	
+	
+#endif
+	
+	virtual ~IFileInfo() = 0;
+
+	/**
+	 * Check with the magic number if this object is valid.
+	 * Return 'true' if it is valid, 'false' if invalid.
+	 *
+	 * Notice that this is intentionally not a virtual function to avoid
+	 * a segfault via the vptr if it is not valid.
+	 **/
+	bool checkMagicNumber() const;
+
+	virtual QString name() const = 0;
+
+
+	virtual QString baseName() const =0;
+
+
+	FileSize byteSize() const { return _size;   }
+
+	/**
+	 * The number of bytes actually allocated on the file system. Usually
+	 * this will be more than @ref byteSize() since the last few bytes of a
+	 * file usually consume an additional cluster on the file system.
+	 *
+	 * In the case of sparse files, however, this might as well be
+	 * considerably less than @ref byteSize() - this means that this file
+	 * has "holes", i.e. large portions filled with zeros. This is typical
+	 * for large core dumps for example. The only way to create such a file
+	 * is to lseek() far ahead of the previous file size and then writing
+	 * data. Most file system utilities will however disregard the fact
+	 * that files are sparse files and simply allocate the holes as well,
+	 * thus greatly increasing the disk space consumption of such a
+	 * file. Only some few file system utilities like "cp", "rsync", "tar"
+	 * have options to handle this more graciously - but usually only when
+	 * specifically requested. See the respective man pages.
+	 **/
+	FileSize allocatedSize() const;
+
+	/**
+	 * The file size, taking into account multiple links for plain files or
+	 * the true allocated size for sparse files. For plain files with
+	 * multiple links this will be size/no_links, for sparse files it is
+	 * the number of bytes actually allocated.
+	 **/
+	FileSize size() const;
+
+	/**
+	 * The file size in 512 byte blocks.
+	 **/
+	FileSize blocks() const { return _blocks; }
+
+	/**
+	 * The size of one single block that @ref blocks() returns.
+	 * Notice: This is _not_ the blocksize that lstat() returns!
+	 **/
+	FileSize blockSize() const { return 512L;    }
+
+	/**
+	 * Returns the total size in bytes of this subtree.
+	 * Derived classes that have children should overwrite this.
+	 **/
+	virtual FileSize totalSize() { return size(); }
+
+	/**
+	 * Returns the total size in blocks of this subtree.
+	 * Derived classes that have children should overwrite this.
+	 **/
+	virtual FileSize totalBlocks() { return _blocks; }
+
+	/**
+	 * Returns the total number of children in this subtree, excluding this
+	 * item.
+	 * Derived classes that have children should overwrite this.
+	 **/
+	virtual int totalItems() { return 0; }
+
+	/**
+	 * Returns the total number of subdirectories in this subtree,
+	 * excluding this item. Dot entries and "." or ".." are not counted.
+	 * Derived classes that have children should overwrite this.
+	 **/
+	virtual int totalSubDirs() { return 0; }
+
+	/**
+	 * Returns the total number of plain file children in this subtree,
+	 * excluding this item.
+	 * Derived classes that have children should overwrite this.
+	 **/
+	virtual int totalFiles() { return 0; }
+
+	
+
+	/**
+	 * Return the percentage of this subtree in regard to its parent
+	 * (0.0..100.0). Return a negative value if for any reason this cannot
+	 * be calculated or it would not make any sense.
+	 *
+	 * Derived classes are free to overwrite this, but this default
+	 * implementation should work well enough.
+	 **/
+	virtual float subtreePercent();
+
+	/**
+	 * Returns 'true' if this had been excluded while reading.
+	 * Derived classes may want to overwrite this.
+	 **/
+	virtual bool isExcluded() const { return false; }
+
+	/**
+	 * Set the 'excluded' status.
+	 *
+	 * This default implementation silently ignores the value passed and
+	 * does nothing. Derived classes may want to overwrite this.
+	 **/
+	virtual void setExcluded( bool excl ) { Q_UNUSED( excl); return; }
+
+	
+	virtual bool isFinished() { return true; }
+
+	/**
+	 * Returns true if this subtree is busy, i.e. it is not finished
+	 * reading yet.
+	 *
+	 * This default implementation always returns 'false';
+	 * derived classes should overwrite this.
+	 **/
+	virtual bool isBusy() { return false; }
+
+	/**
+	 * Returns the number of pending read jobs in this subtree. When this
+	 * number reaches zero, the entire subtree is done.
+	 * Derived classes that have children should overwrite this.
+	 **/
+	virtual int pendingReadJobs() { return 0;  }
+
+
+	//
+	// Tree management
+	//
+
+	/**
+	 * Returns a pointer to the @ref DirTree this entry belongs to.
+	 **/
+//	DirTree * tree() const { return _tree; }
+
+	/**
+	 * Returns a pointer to this entry's parent entry or 0 if there is
+	 * none.
+	 **/
+	virtual IDirInfo * parent() const = 0; //{ return _parent; }
+
+	/**
+	 * Set the "parent" pointer.
+	 **/
+//	void setParent( DirInfo *newParent ) { _parent = newParent; }
+
+	/**
+	 * Returns a pointer to the next entry on the same level
+	 * or 0 if there is none.
+	 **/
+//	IFileInfo * next() const { return _next;	  }
+
+	/**
+	 * Set the "next" pointer.
+	 **/
+//	void  setNext( IFileInfo *newNext ) { _next = newNext; }
+
+	/**
+	 * Returns the first child of this item or 0 if there is none.
+	 * Use the child's next() method to get the next child.
+	 *
+	 * This default implementation always returns 0.
+	 **/
+	virtual IFileInfo * firstChild() const { return 0; }
+
+	/**
+	 * Set this entry's first child.
+	 * Use this method only if you know exactly what you are doing.
+	 *
+	 * This default implementation does nothing.
+	 * Derived classes might want to overwrite this.
+	 **/
+//	virtual void setFirstChild( IFileInfo *newFirstChild )
+//		{ Q_UNUSED( newFirstChild ); }
+
+	/**
+	 * Returns true if this entry has any children.
+	 **/
+	virtual bool hasChildren() const;
+
+	/**
+	 * Returns true if this entry is in subtree 'subtree', i.e. if this is
+	 * a child or grandchild etc. of 'subtree'.
+	 **/
+	bool isInSubtree( const IFileInfo *subtree ) const;
+
+	/**
+	 * Locate a child somewhere in this subtree whose URL (i.e. complete
+	 * path) matches the URL passed. Returns 0 if there is no such child.
+	 *
+	 * Notice: This is a very expensive operation since the entire subtree
+	 * is searched recursively.
+	 *
+	 * Derived classes might or might not wish to overwrite this method;
+	 * it's only advisable to do so if a derived class comes up with a
+	 * different method than brute-force searching all children.
+	 *
+	 * 'findDotEntries' specifies if locating "dot entries" (".../<Files>")
+	 * is desired.
+	 **/
+	virtual IFileInfo * locate( QString url, bool findDotEntries = false );
+
+	/**
+	 * Insert a child into the children list.
+	 *
+	 * The order of children in this list is absolutely undefined;
+	 * don't rely on any implementation-specific order.
+	 *
+	 * This default implementation does nothing.
+	 **/
+	virtual void insertChild( IFileInfo *newChild ) { Q_UNUSED( newChild ); }
+
+	/**
+	 * Return the "Dot Entry" for this node if there is one (or 0
+	 * otherwise): This is a pseudo entry that directory nodes use to store
+	 * non-directory children separately from directories. This way the end
+	 * user can easily tell which summary fields belong to the directory
+	 * itself and which are the accumulated values of the entire subtree.
+	 *
+	 * This default implementation always returns 0.
+	 **/
+	virtual IFileInfo *dotEntry()	const { return 0; }
+
+	/**
+	 * Set a "Dot Entry". This makes sense for directories only.
+	 *
+	 * This default implementation does nothing.
+	 **/
+	virtual void setDotEntry( IFileInfo *newDotEntry )
+		{ Q_UNUSED( newDotEntry ); }
+
+	/**
+	 * Returns true if this is a "Dot Entry".
+	 * See @ref dotEntry() for details.
+	 *
+	 * This default implementation always returns false.
+	 **/
+	virtual bool isDotEntry() const { return false; }
+
+	/**
+	 * (Translated) user-visible string for a "Dot Entry" ("<Files>").
+	 **/
+	static QString dotEntryName();
+
+	/**
+	 * Returns the tree level (depth) of this item.
+	 * The topmost level is 0.
+	 *
+	 * This is a (somewhat) expensive operation since it will recurse up
+	 * to the top of the tree.
+	 **/
+	int treeLevel() const;
+
+	/**
+	 * Notification that a child has been added somewhere in the subtree.
+	 *
+	 * This default implementation does nothing.
+	 **/
+	virtual void childAdded( IFileInfo *newChild ) { Q_UNUSED( newChild ); }
+
+	/**
+	 * Remove a child from the children list.
+	 *
+	 * IMPORTANT: This MUST be called just prior to deleting an object of
+	 * this class. Regrettably, this cannot simply be moved to the
+	 * destructor: Important parts of the object might already be destroyed
+	 * (e.g., the virtual table - no more virtual methods).
+	 *
+	 * This default implementation does nothing.
+	 * Derived classes that can handle children should overwrite this.
+	 **/
+	virtual void unlinkChild( IFileInfo *deletedChild ) { Q_UNUSED( deletedChild ); }
+
+	/**
+	 * Notification that a child is about to be deleted somewhere in the
+	 * subtree.
+	 **/
+	virtual void deletingChild( IFileInfo *deletedChild ) { Q_UNUSED( deletedChild ); }
+
+	/**
+	 * Get the current state of the directory reading process:
+	 *
+	 * This default implementation always returns DirFinished.
+	 * Derived classes should overwrite this.
+	 **/
+	virtual DirReadState readState() const { return DirFinished; }
+
+	/**
+	 * Returns true if this is a @ref DirInfo object.
+	 *
+	 * Don't confuse this with @ref isDir() which tells whether or not this
+	 * is a disk directory! Both should return the same, but you'll never
+	 * know - better be safe than sorry!
+	 *
+	 * This default implementation always returns 'false'. Derived classes
+	 * (in particular, those derived from @ref DirInfo) should overwrite
+	 * this.
+	 **/
+	virtual bool isDirInfo() const { return false; }
+
+	virtual bool isDir() const { return hasChildren(); }
+
+
+	/**
+	 * Try to convert this to a @ref DirInfo pointer. This returns null if
+	 * this is not a DirInfo.
+	 **/
+	//DirInfo * toDirInfo();
+
+
+
+	protected:
+
+	// Data members.
+	//
+	// Keep this short in order to use as little memory as possible -
+	// there will be a _lot_ of entries of this kind!
+
+	//short		_magic;			// magic number to detect if this object is valid
+	QString		_name;			// the file name (without path!)
+	//bool		_isLocalFile  :1;	// flag: local or remote file?
+	//bool		_isSparseFile :1;	// (cache) flag: sparse file (file with "holes")?
+	//dev_t		_device;		// device this object resides on
+	//mode_t		_mode;			// file permissions + object type
+	//nlink_t		_links;			// number of links
+	//uid_t		_uid;			// User ID of owner
+	//gid_t		_gid;			// Group ID of owner
+	FileSize	_size;			// size in bytes
+	FileSize	_blocks;		// 512 bytes blocks
+
+	//DirInfo	 *	_parent;		// pointer to the parent entry
+	//IFileInfo *	_next;			// pointer to the next entry
+	//DirTree	 *	_tree;			// pointer to the parent tree
+
+	};	// class IFileInfo
+
+
+
+	typedef QList<IFileInfo *> IFileInfoList;
+
+
+
+	//----------------------------------------------------------------------
+	//			       Static Functions
+	//----------------------------------------------------------------------
+
+
+	/**
+	 * Format a file / subtree size human readable, i.e. in "GB" / "MB"
+	 * etc. rather than huge numbers of digits.
+	 *
+	 * Note: For logDebug() etc., operator<< is overwritten to do exactly that:
+	 *
+	 *	   logDebug() << "Size: " << x->totalSize() << endl;
+	 **/
+	QString formatSize ( FileSize lSize );
+
+	/**
+	 * Format a timestamp (like the latestMTime()) human-readable.
+	 **/
+	QString formatTime( time_t rawTime );
+
+	/**
+	 * Return the last pathname component of a file name.
+	 *
+	 * Examples:
+	 *
+	 *	   "/home/bob/foo.txt"	-> "foo.txt"
+	 *	   "foo.txt"		-> "foo.txt"
+	 *	   "/usr/bin"		-> "bin"
+	 *	   "/usr/bin/"		-> "bin"
+	 *
+	 * Notice that IFileInfo also has a member function baseName().
+	 **/
+	QString baseName( const QString & fileName );
+
+
+
+
+
+	/**
+	 * Print the debugUrl() of a @ref IFileInfo in a debug stream.
+	 **/
+	/*inline QTextStream & operator<< ( QTextStream & stream, const IFileInfo * info )
+	{
+	if ( info )
+	{
+		if ( info->checkMagicNumber() )
+		stream << info->debugUrl();
+		else
+		stream << "<INVALID IFileInfo *>";
+	}
+	else
+		stream << "<NULL IFileInfo *>";
+
+	return stream;
+	}*/
+
+
+	/**
+	 * Human-readable output of a file size in a debug stream.
+	 **/
+	inline QTextStream & operator<< ( QTextStream & stream, FileSize lSize )
+	{
+	stream << formatSize( lSize );
+
+	return stream;
+	}
+
+}	// namespace QDirStat
+
+
+#endif // ifndef IFileInfo_h
+

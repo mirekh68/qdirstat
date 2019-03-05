@@ -1,5 +1,5 @@
 /*
- *   File name: FileInfoIterator.h
+ *   File name: IFileInfoIterator.h
  *   Summary:	Support classes for QDirStat - DirTree iterators
  *   License:	GPL V2 - See file LICENSE for details.
  *
@@ -7,24 +7,24 @@
  */
 
 
-#ifndef FileInfoIterator_h
-#define FileInfoIterator_h
+#ifndef IFileInfoIterator_h
+#define IFileInfoIterator_h
 
 
 #include <QList>
-#include "FileInfo.h"
+#include "IFileInfo.h"
 
 
 namespace QDirStat
 {
     /**
-     * Iterator class for children of a @ref FileInfo object. For optimum
+     * Iterator class for children of a @ref IFileInfo object. For optimum
      * performance, this iterator class does NOT return children in any
      * specific sort order.
      *
      * Sample usage:
      *
-     *	  FileInfoIterator it( node );
+     *	  IFileInfoIterator it( node );
      *
      *	  while ( *it )
      *	  {
@@ -36,120 +36,120 @@ namespace QDirStat
      * subdirectory child and each (direct) file child of 'node'.
      * Notice: This does not recurse into subdirectories!
      *
-     * @short (unsorted) iterator for @ref FileInfo children.
+     * @short (unsorted) iterator for @ref IFileInfo children.
      **/
-    class FileInfoIterator
+    class IFileInfoIterator
     {
     public:
-	/**
-	 * Constructor: Initialize an iterator object to iterate over the
-	 * children of 'parent' (unsorted!). The dot entry is treated as a
-	 * subdirectory.
-	 **/
-	FileInfoIterator( FileInfo * parent );
+    /**
+     * Constructor: Initialize an iterator object to iterate over the
+     * children of 'parent' (unsorted!). The dot entry is treated as a
+     * subdirectory.
+     **/
+    IFileInfoIterator( IFileInfo * parent );
 
     protected:
-	/**
-	 * Alternate constructor to be called from derived classes: Those can
-	 * choose not to call next() in the constructor.
-	 **/
-	FileInfoIterator( FileInfo * parent,
-			  bool	     callNext );
+    /**
+     * Alternate constructor to be called from derived classes: Those can
+     * choose not to call next() in the constructor.
+     **/
+    IFileInfoIterator( IFileInfo * parent,
+              bool	     callNext );
 
     private:
-	/**
-	 * Internal initialization called from any constructor.
-	 **/
-	void init( FileInfo * parent,
-		   bool	      callNext );
+    /**
+     * Internal initialization called from any constructor.
+     **/
+    void init( IFileInfo * parent,
+           bool	      callNext );
 
     public:
 
-	/**
-	 * Return the current child object or 0 if there is no more.
-	 * Same as @ref operator*() .
-	 **/
-	FileInfo * current() { return _current; }
+    /**
+     * Return the current child object or 0 if there is no more.
+     * Same as @ref operator*() .
+     **/
+    IFileInfo * current() { return _current; }
 
-	/**
-	 * Return the current child object or 0 if there is no more.
-	 * Same as @ref current().
-	 **/
-	FileInfo * operator*() { return current(); }
+    /**
+     * Return the current child object or 0 if there is no more.
+     * Same as @ref current().
+     **/
+    IFileInfo * operator*() { return current(); }
 
-	/**
-	 * Advance to the next child. Same as @ref operator++().
-	 **/
-	void next();
+    /**
+     * Advance to the next child. Same as @ref operator++().
+     **/
+    void next();
 
-	/**
-	 * Advance to the next child. Same as @ref next().
-	 **/
-	void operator++() { next(); }
+    /**
+     * Advance to the next child. Same as @ref next().
+     **/
+    void operator++() { next(); }
 
-	/**
-	 * Return the number of items that will be processed.
-	 * This is an expensive operation.
-	 **/
-	int count();
+    /**
+     * Return the number of items that will be processed.
+     * This is an expensive operation.
+     **/
+    int count();
 
 
     protected:
 
-	FileInfo *	_parent;
-	FileInfo *	_current;
-	bool		_directChildrenProcessed;
-	bool		_dotEntryProcessed;
+    IFileInfo *	_parent;
+    IFileInfo *	_current;
+    bool		_directChildrenProcessed;
+    bool		_dotEntryProcessed;
 
-    };	// class FileInfoIterator
+    };	// class IFileInfoIterator
 
 
-    class FileInfoSortedBySizeIterator
+    class IFileInfoSortedBySizeIterator
     {
     public:
 
-	/**
-	 * Constructor. Children below 'minSize' will be ignored by this iterator.
-	 **/
-	FileInfoSortedBySizeIterator( FileInfo	    * parent,
-				      FileSize	      minSize	= 0,
-				      Qt::SortOrder   sortOrder = Qt::DescendingOrder );
+    /**
+     * Constructor. Children below 'minSize' will be ignored by this iterator.
+     **/
+    IFileInfoSortedBySizeIterator( IFileInfo	    * parent,
+                      FileSize	      minSize	= 0,
+                      Qt::SortOrder   sortOrder = Qt::DescendingOrder );
 
-	/**
-	 * Return the current child object or 0 if there is no more.
-	 * Same as @ref operator*() .
-	 **/
-	FileInfo * current();
+    /**
+     * Return the current child object or 0 if there is no more.
+     * Same as @ref operator*() .
+     **/
+    IFileInfo * current();
 
-	/**
-	 * Return the current child object or 0 if there is no more.
-	 * Same as @ref current().
-	 **/
-	FileInfo * operator*() { return current(); }
+    /**
+     * Return the current child object or 0 if there is no more.
+     * Same as @ref current().
+     **/
+    IFileInfo * operator*() { return current(); }
 
-	/**
-	 * Advance to the next child. Same as @ref operator++().
-	 **/
-	void next();
+    /**
+     * Advance to the next child. Same as @ref operator++().
+     **/
+    void next();
 
-	/**
-	 * Advance to the next child. Same as @ref next().
-	 **/
-	void operator++() { next(); }
+    /**
+     * Advance to the next child. Same as @ref next().
+     **/
+    void operator++() { next(); }
 
-	/**
-	 * Return the number of items that will be processed.
-	 **/
-	int count() { return _sortedChildren.size(); }
+    /**
+     * Return the number of items that will be processed.
+     **/
+    int count() { return _sortedChildren.size(); }
 
     protected:
 
-	FileInfoList _sortedChildren;
-	int	     _currentIndex;
+    IFileInfoList _sortedChildren;
+    int	     _currentIndex;
     }; //
 
 } // namespace QDirStat
 
 
-#endif // ifndef FileInfoIterator_h
+#endif // ifndef IFileInfoIterator_h
 

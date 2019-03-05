@@ -18,4 +18,5 @@
 TEMPLATE = subdirs
 CONFIG  += ordered
 
-SUBDIRS  = src scripts doc doc/stats man
+SUBDIRS  = src scripts doc doc/stats man \
+    SpikeForQFileInfo

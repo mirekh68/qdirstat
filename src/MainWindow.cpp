@@ -53,6 +53,10 @@ using QDirStat::DirTreeModel;
 using QDirStat::SelectionModel;
 using QDirStat::CleanupCollection;
 
+IMainWindow*  CreateMainWindow(){
+    return new MainWindow();
+}
+
 
 MainWindow::MainWindow():
     QMainWindow(),
@@ -608,32 +612,32 @@ void MainWindow::openUrl( const QString & url )
 
     try
     {
-	_dirTreeModel->openUrl( url );
+        _dirTreeModel->openUrl( url );
 
-	if ( _urlInWindowTitle )
-	{
-	    // The URL we got at the command line might be relative;
-	    // the DirTree converts this into an absolute URL.
-	    // Let's use that.
+        if ( _urlInWindowTitle )
+        {
+            // The URL we got at the command line might be relative;
+            // the DirTree converts this into an absolute URL.
+            // Let's use that.
 
-	    windowTitle += " " + _dirTreeModel->tree()->url();
-	}
+            windowTitle += " " + _dirTreeModel->tree()->url();
+        }
 
-	setWindowTitle( windowTitle );
+        setWindowTitle( windowTitle );
     }
     catch ( const SysCallFailedException & ex )
     {
-	setWindowTitle( windowTitle );
-	CAUGHT( ex );
+        setWindowTitle( windowTitle );
+        CAUGHT( ex );
 
-	QMessageBox errorPopup( QMessageBox::Warning,	// icon
-				tr( "Error" ),		// title
-				tr( "Could not open directory %1" ).arg( ex.resourceName() ), // text
-				QMessageBox::Ok,	// buttons
-				this );			// parent
-	errorPopup.setDetailedText( ex.what() );
-	errorPopup.exec();
-	askOpenUrl();
+        QMessageBox errorPopup( QMessageBox::Warning,	// icon
+                    tr( "Error" ),		// title
+                    tr( "Could not open directory %1" ).arg( ex.resourceName() ), // text
+                    QMessageBox::Ok,	// buttons
+                    this );			// parent
+        errorPopup.setDetailedText( ex.what() );
+        errorPopup.exec();
+        askOpenUrl();
     }
 
     updateActions();

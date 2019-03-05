@@ -10,7 +10,7 @@
 #ifndef MainWindow_h
 #define MainWindow_h
 
-#include <QMainWindow>
+#include "IMainWindow.h"
 #include <QString>
 #include <QElapsedTimer>
 #include <QTimer>
@@ -39,7 +39,7 @@ using QDirStat::FileInfo;
 using QDirStat::FileTypeStatsWindow;
 
 
-class MainWindow: public QMainWindow
+class MainWindow: public IMainWindow
 {
     Q_OBJECT
 

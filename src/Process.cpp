@@ -8,7 +8,7 @@
  */
 
 
-#include <Process.h>
+#include <QDSProcess.h>
 
 using namespace QDirStat;
 
